@@ -20,7 +20,9 @@ site uses, where each item of `data` is `base64(JSON(["offers", {params}]))`.
 1. Create the API key: `mkdir -p secrets && python3 -c "import secrets;print(secrets.token_urlsafe(32))" > secrets/mcp_api_key && chmod 600 secrets/*`
 2. Edit `compose.yaml`: set `ETILBUDSAVIS_ALLOWED_HOSTS` to your public hostname and make sure the
    container shares a network with your proxy (`PROXY_NETWORK`, default `proxy`).
-3. `docker compose up -d --build`
+3. `docker compose pull && docker compose up -d` (the image is built and published to GHCR by CI;
+   for a private package run `docker login ghcr.io` once with a `read:packages` token. To build locally
+   instead, replace `image:` with `build: .`)
 4. Point the proxy at `http://etilbudsavis-mcp:8000`. Turn off any browser-based login on that route;
    the server checks the Bearer key itself.
 5. `claude mcp add-json etilbudsavis '{"type":"http","url":"https://tilbud-mcp.example.com/mcp","headers":{"Authorization":"Bearer ${ETILBUDSAVIS_MCP_KEY}"}}'`
@@ -50,7 +52,8 @@ site uses, where each item of `data` is `base64(JSON(["offers", {params}]))`.
 - The failed-auth limiter is global: repeated bad keys can lock you out for up to a minute.
 - The image installs exactly what `uv.lock` pins (`uv sync --locked`), and both base images are
   pinned by digest. Dependabot opens weekly PRs for Python packages, Docker images and GitHub
-  Actions; CI (`.github/workflows/ci.yml`) runs lint, tests and a container smoke test on each.
+  Actions; CI (`.github/workflows/ci.yml`) runs lint, tests and a container smoke test on each, and publishes
+  the image to `ghcr.io/stigvoss/etilbudsavis-mcp` from `main`.
 
 ## Development
 
