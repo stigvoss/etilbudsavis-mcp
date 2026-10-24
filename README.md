@@ -39,6 +39,7 @@ services:
   etilbudsavis-mcp:
     image: ghcr.io/stigvoss/etilbudsavis-mcp:latest
     restart: unless-stopped
+    user: "${PUID:-10001}:${PGID:-10001}"   # run as the key file's owner
     environment:
       ETILBUDSAVIS_ALLOWED_HOSTS: "tilbud-mcp.example.com"   # public hostname of the proxy route
       MCP_API_KEY_FILE: /run/secrets/mcp_api_key
@@ -58,9 +59,13 @@ networks:
     name: ${PROXY_NETWORK:-proxy}   # the Docker network your reverse proxy or tunnel is on
 ```
 
-1. Create the API key: `mkdir -p secrets && python3 -c "import secrets;print(secrets.token_urlsafe(32))" > secrets/mcp_api_key && chmod 700 secrets && chmod 644 secrets/mcp_api_key`
-   (the container runs as uid 10001 and must be able to read the file; the private directory keeps
-   other host users out)
+1. Create the API key and tell Compose to run the container as the file's owner, so the key can stay
+   private (`600`) instead of being made readable to everyone:
+
+       mkdir -p secrets && python3 -c "import secrets;print(secrets.token_urlsafe(32))" > secrets/mcp_api_key
+       chmod 600 secrets/mcp_api_key
+       printf 'PUID=%s\nPGID=%s\n' "$(id -u)" "$(id -g)" > .env
+
 2. Edit `ETILBUDSAVIS_ALLOWED_HOSTS` and make sure the container shares a network with your proxy
    (`PROXY_NETWORK`, default `proxy`).
 3. `docker compose pull && docker compose up -d`. To build locally instead, replace `image:` with `build: .`.

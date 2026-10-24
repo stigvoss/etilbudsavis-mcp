@@ -33,8 +33,8 @@ def _secret(name: str) -> str:
         except OSError as exc:
             raise SystemExit(
                 f"Cannot read {name}_FILE ({path}): {exc.strerror}. "
-                "The container runs as uid 10001, so the file must be world-readable (chmod 644) "
-                "or owned by that user; keep its directory private instead."
+                "The container runs as uid 10001 unless compose sets PUID/PGID, so run it as the file's "
+                "owner (PUID=$(id -u), PGID=$(id -g) in .env) rather than loosening the file's mode."
             ) from exc
     return os.environ.get(name, "").strip()
 
