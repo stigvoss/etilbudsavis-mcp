@@ -3,6 +3,8 @@ services:
     # Public image, published by CI on every push to main.
     image: ghcr.io/stigvoss/etilbudsavis-mcp:latest
     restart: unless-stopped
+    # Run as the owner of secrets/mcp_api_key so it can stay chmod 600 (set PUID/PGID in .env).
+    user: "${PUID:-10001}:${PGID:-10001}"
     environment:
       # Public hostname the reverse proxy serves this under (Host-header allow-list).
       ETILBUDSAVIS_ALLOWED_HOSTS: "tilbud-mcp.example.com"
