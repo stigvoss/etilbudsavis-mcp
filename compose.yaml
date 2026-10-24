@@ -6,6 +6,8 @@ services:
     environment:
       # Public hostname the reverse proxy serves this under (Host-header allow-list).
       ETILBUDSAVIS_ALLOWED_HOSTS: "tilbud-mcp.example.com"
+      # Trust X-Forwarded-* only from the proxy: set to the proxy container's IP or subnet.
+      # FORWARDED_ALLOW_IPS: "172.20.0.0/16"
       MCP_API_KEY_FILE: /run/secrets/mcp_api_key
     secrets:
       - mcp_api_key

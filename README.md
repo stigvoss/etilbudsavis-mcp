@@ -30,10 +30,27 @@ site uses, where each item of `data` is `base64(JSON(["offers", {params}]))`.
 | Variable | Default | Meaning |
 |---|---|---|
 | `MCP_TRANSPORT` | `stdio` | `http` for streamable HTTP (the image sets it) |
-| `MCP_API_KEY` / `MCP_API_KEY_FILE` | none | Bearer key; unset means no auth |
-| `ETILBUDSAVIS_ALLOWED_HOSTS` | none | Extra allowed Host headers (comma-separated) |
+| `MCP_API_KEY` / `MCP_API_KEY_FILE` | required in HTTP mode | Bearer key clients must send (min 24 chars) |
+| `ETILBUDSAVIS_ALLOWED_HOSTS` | localhost only | Comma-separated Host headers to accept |
+| `ETILBUDSAVIS_ALLOWED_ORIGINS` | localhost only | Comma-separated allowed Origins (browser clients) |
+| `FORWARDED_ALLOW_IPS` | `127.0.0.1` | Proxy addresses whose `X-Forwarded-*` headers are trusted |
+| `RATE_LIMIT_PER_MIN` | `120` | Global request limit |
+| `AUTH_FAIL_LIMIT_PER_MIN` | `10` | Failed-auth attempts per minute before everything is refused for a while |
+| `LOG_LEVEL` | `info` | uvicorn log level |
 | `HOST` / `PORT` | `0.0.0.0` / `8000` | HTTP bind address |
 | `ETILBUDSAVIS_URL` | `https://etilbudsavis.dk/` | Upstream base URL |
+
+## Security notes
+
+- Offer text comes from third parties and is untrusted; tool descriptions tell the model not to
+  follow instructions found in it.
+- The server is read-only and holds no upstream credentials.
+- Every container on the shared proxy network can reach this server; prefer a network shared only
+  with the proxy.
+- The failed-auth limiter is global: repeated bad keys can lock you out for up to a minute.
+- The image installs exactly what `uv.lock` pins (`uv sync --locked`), and both base images are
+  pinned by digest. Dependabot opens weekly PRs for Python packages, Docker images and GitHub
+  Actions; CI (`.github/workflows/ci.yml`) runs lint, tests and a container smoke test on each.
 
 ## Development
 
