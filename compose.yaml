@@ -1,0 +1,27 @@
+services:
+  etilbudsavis-mcp:
+    build: .
+    image: etilbudsavis-mcp:latest
+    restart: unless-stopped
+    environment:
+      # Public hostname the reverse proxy serves this under (Host-header allow-list).
+      ETILBUDSAVIS_ALLOWED_HOSTS: "tilbud-mcp.example.com"
+      MCP_API_KEY_FILE: /run/secrets/mcp_api_key
+    secrets:
+      - mcp_api_key
+    networks:
+      - proxy
+    # No ports: the reverse proxy or tunnel reaches the container at http://etilbudsavis-mcp:8000 over
+    # the shared network.
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+secrets:
+  mcp_api_key:
+    file: ./secrets/mcp_api_key
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-proxy}   # the Docker network your reverse proxy or tunnel is on
