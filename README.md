@@ -15,17 +15,60 @@ site uses, where each item of `data` is `base64(JSON(["offers", {params}]))`.
     uv sync
     claude mcp add etilbudsavis -- uv run --directory "$PWD" python server.py
 
-## Docker Compose (streamable HTTP at `/mcp`, behind a reverse proxy)
+## Docker
+
+The image is published to GHCR by CI (for a private package, run `docker login ghcr.io` once with a
+`read:packages` token).
+
+    docker run -d --name etilbudsavis-mcp --restart unless-stopped \
+      --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+      -p 127.0.0.1:8000:8000 \
+      -e MCP_API_KEY="$(python3 -c 'import secrets;print(secrets.token_urlsafe(32))')" \
+      -e ETILBUDSAVIS_ALLOWED_HOSTS="tilbud-mcp.example.com" \
+      ghcr.io/stigvoss/etilbudsavis-mcp:latest
+
+Note the generated key (`docker inspect` shows it; use `-e MCP_API_KEY_FILE` with a mounted file to
+avoid that). The server is then at `http://127.0.0.1:8000/mcp`, with an unauthenticated `/healthz`.
+To build locally instead: `docker build -t etilbudsavis-mcp .` and use that image name.
+
+## Docker Compose (behind a reverse proxy)
+
+Streamable HTTP at `/mcp`. A minimal `compose.yaml` (the one in this repo is the same, with comments):
+
+```yaml
+services:
+  etilbudsavis-mcp:
+    image: ghcr.io/stigvoss/etilbudsavis-mcp:latest
+    restart: unless-stopped
+    environment:
+      ETILBUDSAVIS_ALLOWED_HOSTS: "tilbud-mcp.example.com"   # public hostname of the proxy route
+      MCP_API_KEY_FILE: /run/secrets/mcp_api_key
+    secrets: [mcp_api_key]
+    networks: [proxy]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+secrets:
+  mcp_api_key:
+    file: ./secrets/mcp_api_key
+
+networks:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:-proxy}   # the Docker network your reverse proxy or tunnel is on
+```
 
 1. Create the API key: `mkdir -p secrets && python3 -c "import secrets;print(secrets.token_urlsafe(32))" > secrets/mcp_api_key && chmod 600 secrets/*`
-2. Edit `compose.yaml`: set `ETILBUDSAVIS_ALLOWED_HOSTS` to your public hostname and make sure the
-   container shares a network with your proxy (`PROXY_NETWORK`, default `proxy`).
-3. `docker compose pull && docker compose up -d` (the image is built and published to GHCR by CI;
-   for a private package run `docker login ghcr.io` once with a `read:packages` token. To build locally
-   instead, replace `image:` with `build: .`)
+2. Edit `ETILBUDSAVIS_ALLOWED_HOSTS` and make sure the container shares a network with your proxy
+   (`PROXY_NETWORK`, default `proxy`).
+3. `docker compose pull && docker compose up -d`. To build locally instead, replace `image:` with `build: .`.
 4. Point the proxy at `http://etilbudsavis-mcp:8000`. Turn off any browser-based login on that route;
    the server checks the Bearer key itself.
-5. `claude mcp add-json etilbudsavis '{"type":"http","url":"https://tilbud-mcp.example.com/mcp","headers":{"Authorization":"Bearer ${ETILBUDSAVIS_MCP_KEY}"}}'`
+5. Add it to Claude Code, keeping the key out of shell history via an environment variable:
+
+       export ETILBUDSAVIS_MCP_KEY="$(cat secrets/mcp_api_key)"
+       claude mcp add-json etilbudsavis '{"type":"http","url":"https://tilbud-mcp.example.com/mcp","headers":{"Authorization":"Bearer ${ETILBUDSAVIS_MCP_KEY}"}}'
 
 ## Configuration
 
