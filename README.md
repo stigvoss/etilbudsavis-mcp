@@ -42,11 +42,15 @@ services:
     environment:
       ETILBUDSAVIS_ALLOWED_HOSTS: "tilbud-mcp.example.com"   # public hostname of the proxy route
       MCP_API_KEY_FILE: /run/secrets/mcp_api_key
-    secrets: [mcp_api_key]
-    networks: [proxy]
+    secrets:
+      - mcp_api_key
+    networks:
+      - proxy
     read_only: true
-    cap_drop: [ALL]
-    security_opt: ["no-new-privileges:true"]
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
 secrets:
   mcp_api_key:

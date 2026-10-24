@@ -16,8 +16,10 @@ services:
     # No ports: the reverse proxy or tunnel reaches the container at http://etilbudsavis-mcp:8000 over
     # the shared network.
     read_only: true
-    cap_drop: [ALL]
-    security_opt: ["no-new-privileges:true"]
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
 secrets:
   mcp_api_key:
