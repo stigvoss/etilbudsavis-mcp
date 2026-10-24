@@ -58,3 +58,8 @@ def test_http_mode_refuses_missing_or_short_key(load_server, monkeypatch):
     server.API_KEY = ""
     with pytest.raises(SystemExit, match="Missing"):
         server.main()
+
+
+def test_unreadable_key_file_gives_a_clear_error(load_server, tmp_path):
+    with pytest.raises(SystemExit, match="MCP_API_KEY_FILE"):
+        load_server(MCP_API_KEY_FILE=str(tmp_path / "missing"))
