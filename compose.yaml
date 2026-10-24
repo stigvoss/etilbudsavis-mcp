@@ -1,6 +1,6 @@
 services:
   etilbudsavis-mcp:
-    # Published by CI on every push to main. For a private package: docker login ghcr.io (read:packages token).
+    # Public image, published by CI on every push to main.
     image: ghcr.io/stigvoss/etilbudsavis-mcp:latest
     restart: unless-stopped
     environment:

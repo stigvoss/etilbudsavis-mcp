@@ -17,8 +17,7 @@ site uses, where each item of `data` is `base64(JSON(["offers", {params}]))`.
 
 ## Docker
 
-The image is published to GHCR by CI (for a private package, run `docker login ghcr.io` once with a
-`read:packages` token).
+The image is published to GHCR by CI on every push to `main` and is public, so no login is needed to pull it.
 
     docker run -d --name etilbudsavis-mcp --restart unless-stopped \
       --read-only --cap-drop ALL --security-opt no-new-privileges:true \
